@@ -1,20 +1,16 @@
 #################
-#				#
-#	Variables	#
-#				#
+#               #
+#   Variables   #
+#               #
 #################
 
 # Emplacement des librairies STM32CubeF4
 
-STM32Cube = /opt/stm32cubef4/
-
-
+STM32Cube = ../STM32Cube_FW_F4_V1.3.0/
+OPENOCD_CFG = /usr/local/share/openocd/scripts/board/stm32f4discovery.cfg
 
 #Compilateur C
 CC = arm-none-eabi-gcc
-
-#Programme qui crée les les librairies (libLIBRARY.a)à partir des fichiers compilés (SOURCE.o)
-AR=arm-none-eabi-ar
 
 #Options de compilations
 # 	-Os – optimize for size
@@ -33,20 +29,50 @@ DEVICE =STM32F407xx
 OTHER_OPTIONS = -mlittle-endian -mthumb #-mthumb-interwork
 
 #Indique au compilateur dans quels répertoires chercher les headers appelés avec la directive de préprocesseur "#include <header.h>"
-INCLUDE = $(BASIC_INCLUDES) $(shell find $(STM32Cube)Drivers/ -path "*" -printf "-I%h/\n"|sort -u)#-I../STM32Cube_FW_F4_V1.3.0/Drivers/CMSIS/Device/ST/STM32F4xx/Include/ -I../STM32Cube_FW_F4_V1.3.0/Drivers/CMSIS/Include/ #-I../STM32Cube_FW_F4_V1.3.0/Drivers/STM32F4xx_HAL_Driver/Inc/ -I./headers/ -I../STM32Cube_FW_F4_V1.3.0/Drivers/BSP/STM32F4-Discovery/ -I../STM32Cube_FW_F4_V1.3.0/Drivers/BSP/STM32F4-Discovery/ -I../STM32Cube_FW_F4_V1.3.0/Drivers/BSP/Components/cs43l22/ -I$(STM32Cube)Drivers/BSP/Components/lis3dsh $(shell find ../STM32Cube_FW_F4_V1.3.0/Drivers/ -path "*" -printf "-I%h/\n"|sort -u)
+INCLUDE = -I$(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Include/ -I./headers/ $(shell find $(STM32Cube)Drivers/ -path "*" -printf "-I%h/\n"|sort -u) $(shell find ./headers/ -path "*" -printf "-I%h/\n"|sort -u)#-I$(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Include/ -I$(STM32Cube)Drivers/CMSIS/Include/ #-I$(STM32Cube)Drivers/STM32F4xx_HAL_Driver/Inc/ -I./headers/ -I$(STM32Cube)Drivers/BSP/STM32F4-Discovery/ -I$(STM32Cube)Drivers/BSP/STM32F4-Discovery/ -I$(STM32Cube)Drivers/BSP/Components/cs43l22/ -I$(STM32Cube)Drivers/BSP/Components/lis3dsh $(shell find $(STM32Cube)Drivers/ -path "*" -printf "-I%h/\n"|sort -u)
 
-#Répertoires pour les headers requis (core_cm4.h, stm32f4xx.h, stm32f4xx_hal_conf.h, ...)
-BASIC_INCLUDES = -I$(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Include/ -I$(STM32Cube)Projects/STM32F4-Discovery/Templates/Inc/ -I$(STM32Cube)Drivers/CMSIS/Include/
+#Linker
+LINKER = $(STM32Cube)Projects/STM32F4-Discovery/Templates/TrueSTUDIO/STM32F4-Discovery/STM32F407VG_FLASH.ld
 
-#Fichiers sources des librairies à compiler
-SRC_HAL_Driver = $(shell find $(STM32Cube)Drivers/STM32F4xx_HAL_Driver/ -name *.c)
-SRC_BSP = $(shell find $(STM32Cube)Drivers/BSP/ -name *.c)
-SRC_CMSIS = $(shell find $(STM32Cube)Drivers/STM32F4xx_HAL_Driver/ -name *.c)
+#Options pour l'édition de liens
+#	-Wl,--gc-sections – enable garbage collection of unused input sections
+LDFLAGS = $(TARGET) $(OTHER_OPTIONS) -T$(LINKER) -Wl,--gc-sections
+
+#Lister ci-dessous les répertoires contenant les fichiers sources à compiler (1 variable par répertoire) ET LES AJOUTER A LA VARIABLE SRC !!!!
+DIR = ./src/
+DIR2 = $(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/
+
+#Fichiers sources à compiler
+SRC = $(shell find ./src/ -name *.c) $(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f407xx.s
+
+#Librairies
+LIBS = -lHAL_Driver -lCMSIS -lBSP
+
+#Répertoire contenant les librairies compilées
+DIRLIB = ./lib/
 
 #Fichiers objets générés à partir des fichiers sources
-OBJ_HAL_Driver = $(SRC_HAL_Driver:.c=.o)
-OBJ_BSP = $(SRC_BSP:.c=.o)
-OBJ_CMSIS = $(SRC_CMSIS:.c=.o)
+OBJ = $(SRC:.c=.o)
+OBJ_ASS = $(SRC:.s=.o)
+
+#Fichier exécutable généré
+EXEC = ./bin/main.elf
+
+#Convertit le fichier binaire .out au format hexadecimal d'Intel
+CONVERT = arm-none-eabi-objcopy -Oihex ./bin/main.elf ./bin/main.hex
+
+#Télécharge notre fichier hexadécimal dans le STM32
+#Note: Le chemin d'accès au script peut varier selon les distributions GNU/Linux, vérifiez le contenu du package d'opencd de votre distribution pour trouver le chemin valide.
+#Pour ceux du club, choisir entre stm32f4discovery.cfg et stm32f429discovery.cfg
+#OLD : FLASH = openocd -f $(OPENOCDCFG)
+FLASH = openocd -f $(OPENOCD_CFG)  -c "init" -c "reset init" -c "flash write_image erase ./bin/main.hex" -c "reset" -c "shutdown"
+
+#openocd -f board/stm32f4discovery.cfg  -c "init" -c "reset init" -c "flash write_image erase ./build/stm32f4_sample.hex" -c "reset" -c "shutdown"
+
+CONNECT_HW = xterm -e "openocd -f $(OPENOCDCFG)" &
+START_GDB = arm-none-eabi-gdb ./bin/main.elf --eval-command="target remote localhost:3333" --eval-command="monitor reset halt" --eval-command="load" --eval-command="b main" --eval-command="c"
+
+
 
 #################
 #				#
@@ -54,34 +80,62 @@ OBJ_CMSIS = $(SRC_CMSIS:.c=.o)
 #				#
 #################
 
-all :	libHAL_Driver.a libCMSIS.a libBSP.a
 
-win2unix_paths :
-	./win2unix_paths.sh
+all :	lib build oclean done
+
+build :	compile link convert
+
+#	$^ 	La liste des dépendances
+compile :	oclean $(OBJ) $(OBJ_ASS) o2bin
 
 %.o :	%.c
-	$(CC) $(CFLAGS) -c -o $@ $^ -L. -lHAL_Driver
-	mv $@ ./bin
+	@ $(CC) $(CFLAGS) -c -o $@ $^
 
-compile :
-	$(CC) $(CFLAGS) -c -o compiled_file.o $(F)
+%.o :	%.s
+	@ $(CC) $(CFLAGS) -c -o $@ $^
+	@ mv $@ ./bin/
 
-libHAL_Driver.a : $(OBJ_HAL_Driver)
-	$(AR) -r $@ ./bin/*.o
-	ranlib ./libHAL_Driver.a
+o2bin :
+	@ mv *.o ./bin/
+	
+done :
+	@echo 'done ! (if no error)'
 
-libBSP.a : $(OBJ_BSP)
-	$(AR) -r $@ ./bin/*.o
-	echo si la tache échoue tenter : 'make win2unix_paths'
+link :	compile
+	@ $(CC) $(LDFLAGS) ./bin/*.o -L$(DIRLIB) $(LIBS) -o $(EXEC)
+	@ rm -f *.o
 
-libCMSIS.a : $(OBJ_CMSIS)
-	$(AR) -r $@ ./bin/*.o
-	ranlib ./libHAL_Driver.a
+convert :	compile link
+	@ $(CONVERT)
 
-clean :	lclean bclean
+flash :
+	$(FLASH)
+
+debug :
+	$(CONNECT_HW)
+	$(START_GDB)
+
+debug1 :
+	$(CONNECT_HW)
+
+debug2 :
+	$(START_GDB)
+
+%.o :	%.c
+	@ $(CC) $(CFLAGS) -c $^
+
+lib:
+	make -C ./lib
+
+clean :	oclean bclean
+
+oclean :
+	@ rm -f *.o
+	@ rm -f ./bin/*.o
 
 lclean :
-	rm -f *.a
+	rm -f ./lib/*.a
+	rm -f ./lib/bin/*.o
 
 bclean :
-	rm -f ./bin/*
+	rm -f ./bin/main*
