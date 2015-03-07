@@ -7,7 +7,7 @@
 # Emplacement des librairies STM32CubeF4
 
 STM32Cube = ../STM32Cube_FW_F4_V1.3.0/
-
+OPENOCD_CFG = /usr/local/share/openocd/scripts/board/stm32f4discovery.cfg
 
 #Compilateur C
 CC = arm-none-eabi-gcc
@@ -64,12 +64,12 @@ CONVERT = arm-none-eabi-objcopy -Oihex ./bin/main.elf ./bin/main.hex
 #Télécharge notre fichier hexadécimal dans le STM32
 #Note: Le chemin d'accès au script peut varier selon les distributions GNU/Linux, vérifiez le contenu du package d'opencd de votre distribution pour trouver le chemin valide.
 #Pour ceux du club, choisir entre stm32f4discovery.cfg et stm32f429discovery.cfg
-#OLD : FLASH = openocd -f /usr/local/share/openocd/scripts/board/stm32f4discovery.cfg
-FLASH = openocd -f /usr/local/share/openocd/scripts/board/stm32f4discovery.cfg  -c "init" -c "reset init" -c "flash write_image erase ./bin/main.hex" -c "reset" -c "shutdown"
+#OLD : FLASH = openocd -f $(OPENOCDCFG)
+FLASH = openocd -f $(OPENOCD_CFG)  -c "init" -c "reset init" -c "flash write_image erase ./bin/main.hex" -c "reset" -c "shutdown"
 
 #openocd -f board/stm32f4discovery.cfg  -c "init" -c "reset init" -c "flash write_image erase ./build/stm32f4_sample.hex" -c "reset" -c "shutdown"
 
-CONNECT_HW = xterm -e "openocd -f /usr/local/share/openocd/scripts/board/stm32f4discovery.cfg" &
+CONNECT_HW = xterm -e "openocd -f $(OPENOCDCFG)" &
 START_GDB = arm-none-eabi-gdb ./bin/main.elf --eval-command="target remote localhost:3333" --eval-command="monitor reset halt" --eval-command="load" --eval-command="b main" --eval-command="c"
 
 
