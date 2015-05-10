@@ -35,7 +35,7 @@ void init_GPIO_LED() {
     __GPIOD_CLK_ENABLE();
 
     // Configure PD12, PD13, PD14 and PD15 in output pushpull mode
-    GPIO_InitStructure.Pin = GPIO_PIN_12 | GPIO_PIN_13| GPIO_PIN_14| GPIO_PIN_15;
+    GPIO_InitStructure.Pin = GPIO_PIN_12 | GPIO_PIN_13| GPIO_PIN_14|GPIO_PIN_15;
     GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
     GPIO_InitStructure.Pull = GPIO_PULLUP;

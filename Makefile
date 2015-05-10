@@ -6,7 +6,7 @@
 
 # Emplacement des librairies STM32CubeF4
 
-STM32Cube = ../STM32Cube_FW_F4_V1.3.0/
+STM32Cube = ../STM32Cube_FW_F4_V1.5.0/
 
 
 #Compilateur C
@@ -26,7 +26,7 @@ DEVICE =STM32F407xx
 #   -mthumb – generate core that executes in Thumb states
 #  	-mthumb-interwork – generate code that supports calling between the ARM and Thumb instruction sets
 # 	-DSTM32F401xE – define target processor (used in device header files)
-OTHER_OPTIONS = -mlittle-endian -mthumb #-mthumb-interwork
+OTHER_OPTIONS = -mlittle-endian -mthumb -mthumb-interwork
 
 #Indique au compilateur dans quels répertoires chercher les headers appelés avec la directive de préprocesseur "#include <header.h>"
 INCLUDE = -I$(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Include/ -I./headers/ $(shell find $(STM32Cube)Drivers/ -path "*" -printf "-I%h/\n"|sort -u) $(shell find ./headers/ -path "*" -printf "-I%h/\n"|sort -u)#-I$(STM32Cube)Drivers/CMSIS/Device/ST/STM32F4xx/Include/ -I$(STM32Cube)Drivers/CMSIS/Include/ #-I$(STM32Cube)Drivers/STM32F4xx_HAL_Driver/Inc/ -I./headers/ -I$(STM32Cube)Drivers/BSP/STM32F4-Discovery/ -I$(STM32Cube)Drivers/BSP/STM32F4-Discovery/ -I$(STM32Cube)Drivers/BSP/Components/cs43l22/ -I$(STM32Cube)Drivers/BSP/Components/lis3dsh $(shell find $(STM32Cube)Drivers/ -path "*" -printf "-I%h/\n"|sort -u)

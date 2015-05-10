@@ -282,9 +282,6 @@ void init_servo(Servo_t *servoX, GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
 void test_servo(Servo_t *servoX, GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
 
 
-
-
-
     display_PWM(GPIOx, GPIO_Pin);
     set_position_servo(5000, servoX);
     display_PWM(GPIOx, GPIO_Pin);
